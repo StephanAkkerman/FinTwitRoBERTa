@@ -130,6 +130,24 @@ python ModernFinTwitBERT/wsb.py --score StephanAkkerman/FinTwitBERT-wsb-sentimen
 - Posts are longer than tweets, so `max_length` is 256 (3% of posts are longer).
 - `--hub-repo` uploads the chosen run to its own Hugging Face repo (created private unless `--public`) with a WSB model card (`wsb_card()` in `wsb.py`, same layout as the FinTwitRoBERTa-sentiment card) and the temperature in `config.calibration_temperature`. Without `--hub-repo`, `--save` keeps the model and card in `output/experiments_wsb/models/`.
 
+### Promoting the best model to Hugging Face
+
+`ModernFinTwitBERT/promote.py` runs the last steps after the experiments in one go:
+
+1. **Pick** the experiment with the best mean `dev/macro_f1` over its seeds, and its best seed (or `--experiment`/`--seed`). It warns when the lead is smaller than the seed spread.
+2. **Build** the model: it reuses `output/.../models/<name>-seed<seed>` if that run was saved, else it retrains that run with `--save`.
+3. **Check** it against the model on Hugging Face. Both are scored on the same dev and test sets (WSB: also the tweet test set). The Hugging Face model is downloaded and scored, so this works after local experiments are deleted and doesn't trust old numbers.
+4. **Upload** only if the candidate's dev macro F1 beats the Hugging Face model's by more than `--min-gain` (default 0), or the repo doesn't exist yet. For the tweet model, the decision thresholds and the int8 ONNX model are then redone for the new weights and uploaded too.
+
+The comparison is saved to `output/experiments*/promotion.json`. Log in first with `hf auth login`.
+
+```bash
+python ModernFinTwitBERT/promote.py --dry-run                              # tweets, compare only
+python ModernFinTwitBERT/promote.py                                        # FinTwitRoBERTa-sentiment
+python ModernFinTwitBERT/promote.py --config experiments_wsb.json          # FinTwitRoBERTa-wsb-sentiment
+python ModernFinTwitBERT/promote.py --config experiments_wsb.json --experiment from-sentiment-lr2e-05
+```
+
 ### Confidence thresholds
 
 `ModernFinTwitBERT/thresholds.py` tunes how confident the model must be before a tweet counts as bullish or bearish (below the threshold it is neutral). It picks, per class, the lowest threshold whose dev precision reaches `--target-precision` (default 0.9), confirms it on the test set and writes the full tradeoff tables to `output/thresholds/`. Rerun it after every retrain.

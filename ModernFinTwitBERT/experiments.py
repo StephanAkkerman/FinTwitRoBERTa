@@ -374,6 +374,11 @@ def main():
     parser.add_argument("--config", default="experiments.json")
     parser.add_argument("--only", nargs="+", help="Only run these experiments, by name")
     parser.add_argument(
+        "--exact",
+        action="store_true",
+        help="--only matches whole names (by default a name also selects names it starts)",
+    )
+    parser.add_argument(
         "--rerun", action="store_true", help="Drop earlier results of the selected experiments"
     )
     parser.add_argument("--seeds", nargs="+", type=int, help="Override the seeds in the config")
@@ -406,7 +411,12 @@ def main():
     results = pd.read_csv(results_path) if results_path.exists() else pd.DataFrame()
     experiments = expand(plan["experiments"])
     if args.only:
-        experiments = [e for e in experiments if any(e["name"].startswith(o) for o in args.only)]
+        if args.exact:
+            experiments = [e for e in experiments if e["name"] in args.only]
+        else:
+            experiments = [
+                e for e in experiments if any(e["name"].startswith(o) for o in args.only)
+            ]
     seeds = args.seeds or plan.get("seeds", [42])
     if args.hub_repo and len(experiments) * len(seeds) != 1:
         parser.error(
