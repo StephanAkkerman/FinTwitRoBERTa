@@ -1,4 +1,4 @@
-# ModernFinTwitBERT
+# FinTwitRoBERTa
 
 <!-- Add a banner here like: https://github.com/StephanAkkerman/fintwit-bot/blob/main/img/logo/fintwit-banner.png -->
 
@@ -6,13 +6,13 @@
 <!-- Adjust the link of the second badge to your own repo -->
 <p align="center">
   <img src="https://img.shields.io/badge/python-3.10-blue.svg" alt="Supported versions">
-  <img src="https://img.shields.io/github/license/StephanAkkerman/ModernFinTwitBERT?color=brightgreen" alt="License">
+  <img src="https://img.shields.io/github/license/StephanAkkerman/FinTwitRoBERTa?color=brightgreen" alt="License">
   <a href="https://github.com/psf/black"><img src="https://img.shields.io/badge/code%20style-black-000000.svg" alt="Code style: black"></a>
 </p>
 
 ## Introduction
 
-**ModernFinTwitBERT** is a transformer-based sentiment analysis model fine-tuned specifically for financial Twitter (FinTwit) content. It builds on top of [ModernBERT](https://github.com/StephanAkkerman/ModernBERT), a lightweight and optimized language model for modern short-form text, and is trained to accurately classify tweets related to stocks, finance, and investing into sentiment categories such as bullish, bearish, or neutral.
+**FinTwitRoBERTa** is a transformer-based sentiment analysis model fine-tuned specifically for financial Twitter (FinTwit) content. It builds on top of [cardiffnlp/twitter-roberta-large-2022-154m](https://huggingface.co/cardiffnlp/twitter-roberta-large-2022-154m), a lightweight and optimized language model for modern short-form text, and is trained to accurately classify tweets related to stocks, finance, and investing into sentiment categories such as bullish, bearish, or neutral.
 
 This project aims to provide a fast, lightweight, and domain-adapted model for analyzing financial discourse on social media. It is ideal for researchers, retail traders, and data scientists interested in extracting sentiment signals from noisy, fast-moving FinTwit data.
 
@@ -27,7 +27,7 @@ This project aims to provide a fast, lightweight, and domain-adapted model for a
 
 ## Key Features 🔑
 
-- ✅ Built on top of **ModernBERT** for optimized performance on short-form content  
+- ✅ Built on top of **RoBERTa-large** for optimized performance on short-form content  
 - 🧠 Fine-tuned on tens of thousands of labeled FinTwit examples  
 - 💬 Supports multi-class sentiment classification (e.g. bullish / bearish / neutral)  
 - ⚡ Lightweight & efficient — suitable for real-time applications  
@@ -44,7 +44,7 @@ pip install -r requirements.txt
 Alternatively, install directly from GitHub:
 
 ```bash
-pip install git+https://github.com/StephanAkkerman/ModernFinTwitBERT.git
+pip install git+https://github.com/StephanAkkerman/FinTwitRoBERTa.git
 ```
 
 ## Usage ⌨️
@@ -53,8 +53,8 @@ You can load the model using transformers and run predictions on FinTwit content
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 import torch
 
-tokenizer = AutoTokenizer.from_pretrained("StephanAkkerman/ModernFinTwitBERT")
-model = AutoModelForSequenceClassification.from_pretrained("StephanAkkerman/ModernFinTwitBERT")
+tokenizer = AutoTokenizer.from_pretrained("StephanAkkerman/FinTwitRoBERTa-sentiment")
+model = AutoModelForSequenceClassification.from_pretrained("StephanAkkerman/FinTwitRoBERTa-sentiment")
 
 tweet = "Feeling bullish on $AAPL after that earnings call!"
 inputs = tokenizer(tweet, return_tensors="pt")
@@ -68,13 +68,13 @@ print(f"Predicted sentiment: {predicted_class}")
 
 ## Training 🏋️
 
-Training is configured in `config.json` and run from the repository root with `python ModernFinTwitBERT/model.py`. The base model is `cardiffnlp/twitter-roberta-large-2022-154m`, which scored best in the benchmark (macro F1 0.807 on the test set).
+Training is configured in `config.json` and run from the repository root with `python FinTwitRoBERTa/model.py`. The base model is `cardiffnlp/twitter-roberta-large-2022-154m`, which scored best in the benchmark (macro F1 0.807 on the test set).
 
 1. **Domain pretraining:** set `"mode": "pretrain"`. This continues masked-language-model training on the sources in `pretrain.datasets` (by default `StephanAkkerman/financial-tweets`, shown 3 times, and `StephanAkkerman/crypto-stock-tweets`, with the test and dev tweets removed) and saves to `output/<pretrain model_name>`. One epoch takes a few hours on an A100. The released result is [FinTwitRoBERTa-large](https://huggingface.co/StephanAkkerman/FinTwitRoBERTa-large).
 
-   - At the end, the run measures the perplexity of the model and its base model on the test and dev tweets (kept out of pretraining) and writes a Hugging Face model card (`README.md`) and `pretrain_stats.json` next to the model. `python ModernFinTwitBERT/pretrain_card.py` rewrites the card later, e.g. to add the benchmark results; see its docstring.
+   - At the end, the run measures the perplexity of the model and its base model on the test and dev tweets (kept out of pretraining) and writes a Hugging Face model card (`README.md`) and `pretrain_stats.json` next to the model. `python FinTwitRoBERTa/pretrain_card.py` rewrites the card later, e.g. to add the benchmark results; see its docstring.
    - On a rented GPU, `scripts/pretrain_remote.sh` does all of this: it installs the requirements (without flash-attn, which RoBERTa does not use), runs a 50-step trial, then the full run, and uploads the model with its card to `pretrain.hub_repo` from `config.json` (or `HF_REPO`). A new repo is created private.
-   - Start with `python ModernFinTwitBERT/model.py --max-steps 50`: a short trial run that saves nothing, to check speed and memory on a new GPU.
+   - Start with `python FinTwitRoBERTa/model.py --max-steps 50`: a short trial run that saves nothing, to check speed and memory on a new GPU.
    - The pretraining batch (256) is sized for an 80 GB A100. On a 40 GB GPU, use 128 with `gradient_accumulation_steps` 2.
    - `pretrain.datasets` in `config.json` lists the sources: Hugging Face ids or local `.csv`/`.jsonl`/`.parquet` files, each with an optional `text_column` and `repeat` to upweight it. Put curated sources first: near-duplicates are kept in the first source listed.
    - The cleaned tweets are cached in `datasets/pretrain_clean`, and cleaned again automatically when a source dataset, the cleaning code or the test set changes.
@@ -85,7 +85,7 @@ To check whether pretraining helped, add the pretraining output to `benchmark.js
 
 ## Benchmark 📊
 
-`ModernFinTwitBERT/benchmark.py` scores models on the frozen tweet test set (`data/test/test_v0.csv`). The models are listed in `benchmark.json`:
+`FinTwitRoBERTa/benchmark.py` scores models on the frozen tweet test set (`data/test/test_v0.csv`). The models are listed in `benchmark.json`:
 
 - `"base"`: a pretrained model (Hugging Face id or local path) that is fine-tuned on our sentiment data with the recipe in `config.json`, once per seed in `"seeds"`, then scored. Use this to compare starting points, such as ModernBERT-base against a finance-pretrained ModernBERT or our own domain-pretrained model.
 - `"classifier"`: an existing sentiment model that is scored as is, such as our released model or other people's. Add a `"label_map"` when its labels are not neutral/bullish/bearish or positive/negative, and a `"tokenizer"` when the model was uploaded without one.
@@ -93,19 +93,19 @@ To check whether pretraining helped, add the pretraining output to `benchmark.js
 `"finetune_args"` (top level, or per model) overrides the fine-tuning arguments in `config.json`. Run from the repository root:
 
 ```bash
-python ModernFinTwitBERT/benchmark.py
-python ModernFinTwitBERT/benchmark.py --only fin-modernbert   # run one entry
+python FinTwitRoBERTa/benchmark.py
+python FinTwitRoBERTa/benchmark.py --only fin-modernbert   # run one entry
 ```
 
 Every run is appended to `output/benchmark/results.csv` and runs already there are skipped, so adding a model to `benchmark.json` and rerunning only runs the new one. Add `--rerun` to run the selected entries again from scratch. `output/benchmark/summary.md` has the mean and standard deviation over seeds per model. `macro_f1_low`/`macro_f1_high` is a 95% bootstrap interval over the test tweets: differences inside it are likely noise.
 
 ## Experiments 🧪
 
-`ModernFinTwitBERT/experiments.py` fine-tunes the model with every setting in `experiments.json`, once per seed, and logs each run to wandb (project `FinTwitRoBERTa-finetune`, one group per experiment). Run `wandb login` once first; without a login, results are only saved locally.
+`FinTwitRoBERTa/experiments.py` fine-tunes the model with every setting in `experiments.json`, once per seed, and logs each run to wandb (project `FinTwitRoBERTa-finetune`, one group per experiment). Run `wandb login` once first; without a login, results are only saved locally.
 
 ```bash
-python ModernFinTwitBERT/experiments.py
-python ModernFinTwitBERT/experiments.py --only llrd balanced
+python FinTwitRoBERTa/experiments.py
+python FinTwitRoBERTa/experiments.py --only llrd balanced
 ```
 
 - `"grid"` runs every combination of the listed TrainingArguments values as its own experiment, e.g. `grid-lr2e-05-ep3`.
@@ -113,17 +113,17 @@ python ModernFinTwitBERT/experiments.py --only llrd balanced
 - Pick the winner by dev macro F1 (`dev/macro_f1`) and use the test scores only to confirm it, so we don't tune on the test set. The dev set (`data/test/dev_v0.csv`, 749 tweets from 2024 onwards) comes from the same feed and guideline as the test set. `val/f1` is on a split of the training sources and is not a good guide: it ranked the first round of experiments almost in reverse order of test.
 - `test/ece_calibrated` is the calibration error after temperature scaling on the dev set, and `ensemble macro_f1` scores the average of an experiment's seeds.
 - Results go to `output/experiments/results.csv` and `summary.md`; finished runs are skipped on a rerun.
-- `--save` keeps a run's model with its dev-fitted temperature and a Hugging Face model card; `--hub-repo` also uploads it. `python ModernFinTwitBERT/sentiment_card.py --experiment <name> --seed <seed>` rewrites the card of a model that is already trained (it scores the model on the dev and test sets again); see its docstring.
+- `--save` keeps a run's model with its dev-fitted temperature and a Hugging Face model card; `--hub-repo` also uploads it. `python FinTwitRoBERTa/sentiment_card.py --experiment <name> --seed <seed>` rewrites the card of a model that is already trained (it scores the model on the dev and test sets again); see its docstring.
 
 ### r/wallstreetbets model
 
 `experiments_wsb.json` fine-tunes a variant for r/wallstreetbets posts on the [WSBS](https://github.com/moonscape95/WSBS) dataset (downloaded on first use). It uses the same train/validation/test split of `WSB_all_agree.csv` as [FinTwitBERT-wsb-sentiment](https://huggingface.co/StephanAkkerman/FinTwitBERT-wsb-sentiment), so both are tested on the same 227 posts (the old model scores 0.821 macro F1). Experiments are picked by macro F1 on the 226 WSB validation posts (`dev/macro_f1`), and `tweets/macro_f1` shows how well each still reads tweets. Results go to `output/experiments_wsb/`.
 
 ```bash
-python ModernFinTwitBERT/experiments.py --config experiments_wsb.json
-python ModernFinTwitBERT/experiments.py --config experiments_wsb.json --only from-sentiment-lr2e-05 --seeds 42 \
+python FinTwitRoBERTa/experiments.py --config experiments_wsb.json
+python FinTwitRoBERTa/experiments.py --config experiments_wsb.json --only from-sentiment-lr2e-05 --seeds 42 \
     --hub-repo StephanAkkerman/FinTwitRoBERTa-wsb-sentiment
-python ModernFinTwitBERT/wsb.py --score StephanAkkerman/FinTwitBERT-wsb-sentiment  # any model on the WSB test posts
+python FinTwitRoBERTa/wsb.py --score StephanAkkerman/FinTwitBERT-wsb-sentiment  # any model on the WSB test posts
 ```
 
 - `from-sentiment` continues from FinTwitRoBERTa-sentiment (as the old WSB model did from FinTwitBERT-sentiment), `from-large` starts from the pre-trained model, `from-sentiment-full` also trains on the 1,411 posts the annotators did not all agree on, and `with-tweets` trains one model on the tweets plus the WSB posts (x5) to see if a single model can serve both.
@@ -132,7 +132,7 @@ python ModernFinTwitBERT/wsb.py --score StephanAkkerman/FinTwitBERT-wsb-sentimen
 
 ### Promoting the best model to Hugging Face
 
-`ModernFinTwitBERT/promote.py` runs the last steps after the experiments in one go:
+`FinTwitRoBERTa/promote.py` runs the last steps after the experiments in one go:
 
 1. **Pick** the experiment with the best mean `dev/macro_f1` over its seeds, and its best seed (or `--experiment`/`--seed`). It warns when the lead is smaller than the seed spread.
 2. **Build** the model: it reuses `output/.../models/<name>-seed<seed>` if that run was saved, else it retrains that run with `--save`.
@@ -142,32 +142,32 @@ python ModernFinTwitBERT/wsb.py --score StephanAkkerman/FinTwitBERT-wsb-sentimen
 The comparison is saved to `output/experiments*/promotion.json`. Log in first with `hf auth login`.
 
 ```bash
-python ModernFinTwitBERT/promote.py --dry-run                              # tweets, compare only
-python ModernFinTwitBERT/promote.py                                        # FinTwitRoBERTa-sentiment
-python ModernFinTwitBERT/promote.py --config experiments_wsb.json          # FinTwitRoBERTa-wsb-sentiment
-python ModernFinTwitBERT/promote.py --config experiments_wsb.json --experiment from-sentiment-lr2e-05
+python FinTwitRoBERTa/promote.py --dry-run                              # tweets, compare only
+python FinTwitRoBERTa/promote.py                                        # FinTwitRoBERTa-sentiment
+python FinTwitRoBERTa/promote.py --config experiments_wsb.json          # FinTwitRoBERTa-wsb-sentiment
+python FinTwitRoBERTa/promote.py --config experiments_wsb.json --experiment from-sentiment-lr2e-05
 ```
 
 ### Confidence thresholds
 
-`ModernFinTwitBERT/thresholds.py` tunes how confident the model must be before a tweet counts as bullish or bearish (below the threshold it is neutral). It picks, per class, the lowest threshold whose dev precision reaches `--target-precision` (default 0.9), confirms it on the test set and writes the full tradeoff tables to `output/thresholds/`. Rerun it after every retrain.
+`FinTwitRoBERTa/thresholds.py` tunes how confident the model must be before a tweet counts as bullish or bearish (below the threshold it is neutral). It picks, per class, the lowest threshold whose dev precision reaches `--target-precision` (default 0.9), confirms it on the test set and writes the full tradeoff tables to `output/thresholds/`. Rerun it after every retrain.
 
 ```bash
-python ModernFinTwitBERT/thresholds.py
-python ModernFinTwitBERT/thresholds.py --model output/experiments/models/llrd-0.9-seed42 --recompute --save
+python FinTwitRoBERTa/thresholds.py
+python FinTwitRoBERTa/thresholds.py --model output/experiments/models/llrd-0.9-seed42 --recompute --save
 ```
 
 `--save` stores them in the model config as `decision_thresholds`, and `--hub-repo` uploads that config to Hugging Face.
 
 ### Small and fast inference (ONNX int8)
 
-`ModernFinTwitBERT/export_onnx.py` exports the model to ONNX with int8 weights (per-channel dynamic quantization). It is about 4x smaller (358 MB instead of 1.4 GB) and 4x faster on CPU, with the same dev and test F1. The script checks this on both sets and adds an "ONNX int8" section with the size, speed and scores to the model card. `--hub-repo` uploads the result as `onnx/model_int8.onnx`, together with the updated card.
+`FinTwitRoBERTa/export_onnx.py` exports the model to ONNX with int8 weights (per-channel dynamic quantization). It is about 4x smaller (358 MB instead of 1.4 GB) and 4x faster on CPU, with the same dev and test F1. The script checks this on both sets and adds an "ONNX int8" section with the size, speed and scores to the model card. `--hub-repo` uploads the result as `onnx/model_int8.onnx`, together with the updated card.
 
 ```bash
-python ModernFinTwitBERT/export_onnx.py --hub-repo StephanAkkerman/FinTwitRoBERTa-sentiment
+python FinTwitRoBERTa/export_onnx.py --hub-repo StephanAkkerman/FinTwitRoBERTa-sentiment
 ```
 
-`ModernFinTwitBERT/onnx_predict.py` runs that model with only `onnxruntime`, `tokenizers` and `huggingface_hub` (no torch), and applies the preprocessing, calibration temperature and decision thresholds:
+`FinTwitRoBERTa/onnx_predict.py` runs that model with only `onnxruntime`, `tokenizers` and `huggingface_hub` (no torch), and applies the preprocessing, calibration temperature and decision thresholds:
 
 ```python
 from onnx_predict import OnnxSentiment
@@ -180,13 +180,13 @@ OnnxSentiment().predict(["$NVDA breaking out, adding here"])
 If you use this project in your research, please cite as follows:
 
 ```bibtex
-@misc{akkerman2025modernfintwitbert,
+@misc{akkerman2025FinTwitRoBERTa,
   author  = {Stephan Akkerman},
-  title   = {ModernFinTwitBERT},
+  title   = {FinTwitRoBERTa},
   year    = {2025},
   publisher = {GitHub},
   journal = {GitHub repository},
-  howpublished = {\url{https://github.com/StephanAkkerman/ModernFinTwitBERT}}
+  howpublished = {\url{https://github.com/StephanAkkerman/FinTwitRoBERTa}}
 }
 ```
 
