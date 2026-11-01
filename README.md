@@ -135,8 +135,8 @@ Both come from the same real feed as `financial-tweets` and are never used for p
 
 ```bash
 # Clone this repository
-git clone https://github.com/StephanAkkerman/ModernFinTwitBERT
-cd ModernFinTwitBERT
+git clone https://github.com/StephanAkkerman/FinTwitRoBERTa
+cd FinTwitRoBERTa
 # Install required packages
 pip install -r requirements.txt
 ```
@@ -330,7 +330,7 @@ If you use FinTwitRoBERTa in your research, please cite it as follows:
   year = {2026},
   publisher = {GitHub},
   journal = {GitHub repository},
-  howpublished = {\url{https://github.com/StephanAkkerman/ModernFinTwitBERT}}
+  howpublished = {\url{https://github.com/StephanAkkerman/FinTwitRoBERTa}}
 }
 ```
 
@@ -350,7 +350,7 @@ FinTwitRoBERTa builds on [FinTwitBERT](https://github.com/TimKoornstra/FinTwitBE
 
 Contributions are welcome! If you have a feature request, bug report, or proposal for code refactoring, please feel free to open an issue on GitHub. We appreciate your help in improving this project.
 
-![Contributors](https://contributors-img.firebaseapp.com/image?repo=StephanAkkerman/ModernFinTwitBERT)
+![Contributors](https://contributors-img.firebaseapp.com/image?repo=StephanAkkerman/FinTwitRoBERTa)
 
 ## License
 
